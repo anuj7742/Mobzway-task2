@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Room</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .table {
+      background-color: #fff;
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .table thead {
+      background-color: #1d3557;
+      color: #fff;
+    }
+
+    .table thead th {
+      padding: 15px;
+      text-align: center;
+    }
+
+    .table tbody {
+      text-align: center;
+    }
+
+    .table tbody tr {
+      transition: background-color 0.3s;
+    }
+
+    .table tbody tr:hover {
+      background-color: #e9ecef;
+    }
+
+    .status-light {
+      height: 15px;
+      width: 15px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    .status-online {
+      background-color: #28a745;
+    }
+
+    .status-offline {
+      background-color: #dc3545;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #ffffff;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .popup button {
+      background-color: #1d3557;
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 20px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+
+    .popup button:hover {
+      background-color: #457b9d;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="mb-4 text-center">User Room</h2>
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Email ID</th>
+          <th>Socket ID</th>
+          
+        </tr>
+      </thead>
+      <tbody id="users"></tbody>
+    </table>
+  </div>
+
+  <div class="overlay"></div>
+
+  <div class="popup">
+    <div id="details"></div>
+    <button id="close">X</button>
+  </div>
+
+  <script>
+    $(document).ready(function () {
+      const socket = io();
+      
+      socket.on("connect", function () {
+        const storedUser = JSON.parse(localStorage.getItem("live_user"));
+        if (storedUser) {
+          socket.emit("joinRoom", storedUser);
+        }
+      });
+
+      socket.on("update", function (users) {
+        $("#users").empty();
+        for (const email in users) {
+          const usr = users[email];
+          const stat = usr.socketId ? `<span class="status-light status-online"></span>Online` : `<span class="status-light status-offline"></span>Offline`;
+          $("#users").append(
+            `<tr data-email="${email}">
+              <td>${stat}</td>
+              <td>${email}</td>
+              <td>${usr.socketId || "N/A"}</td>
+              
+            </tr>`
+          );
+        }
+      });
+
+      $("#users").on("click", "tr", function () {
+        const email = $(this).data("email");
+        $.ajax({
+          type: "GET",
+          url: `/api/users/${email}`,
+          success: function (usr) {
+            const data = `
+              <p><strong>Email:</strong> ${usr.email}</p>
+              <p><strong>Name:</strong> ${usr.firstName} ${usr.lastName}</p>
+              <p><strong>Mobile:</strong> ${usr.mobileNo}</p>
+              <p><strong>Address:</strong> ${usr.address.street}, ${usr.address.city}, ${usr.address.state}, ${usr.address.country}</p>
+              <p><strong>Login ID:</strong> ${usr.loginId}</p>
+            `;
+            $("#details").html(data);
+            $(".overlay, .popup").show();
+          },
+          error: function () {
+            alert("Error occurred in fetching details");
+          }
+        });
+      });
+
+      $("#close").click(function () {
+        $(".overlay, .popup").hide();
+      });
+    });
+  </script>
+</body>
+</html>

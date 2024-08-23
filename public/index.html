@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Registration</title>
+  <!-- Bootstrap CSS -->
+  <link
+    rel="stylesheet"
+    href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+  />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <div class="container mt-5">
+    <h2 class="mb-4 text-center">User Registration</h2>
+    <form id="userForm">
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <input
+            type="text"
+            class="form-control"
+            id="firstName"
+            name="firstName"
+            placeholder="First Name"
+            required
+          />
+          <span class="error-message" id="firstNameError"></span>
+        </div>
+        <div class="form-group col-md-6">
+          <input
+            type="text"
+            class="form-control"
+            id="lastName"
+            name="lastName"
+            placeholder="Last Name"
+            required
+          />
+          <span class="error-message" id="lastNameError"></span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <input
+            type="text"
+            class="form-control"
+            id="mobileNo"
+            name="mobileNo"
+            placeholder="Mobile No"
+            required
+          />
+          <span class="error-message" id="mobileNoError"></span>
+        </div>
+        <div class="form-group col-md-6">
+          <input
+            type="email"
+            class="form-control"
+            id="email"
+            name="email"
+            placeholder="Email"
+            required
+          />
+          <span class="error-message" id="emailError"></span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <input
+            type="text"
+            class="form-control"
+            id="street"
+            name="street"
+            placeholder="Street"
+            required
+          />
+          <span class="error-message" id="streetError"></span>
+        </div>
+        <div class="form-group col-md-6">
+          <input
+            type="text"
+            class="form-control"
+            id="city"
+            name="city"
+            placeholder="City"
+            required
+          />
+          <span class="error-message" id="cityError"></span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <input
+            type="text"
+            class="form-control"
+            id="state"
+            name="state"
+            placeholder="State"
+            required
+          />
+          <span class="error-message" id="stateError"></span>
+        </div>
+        <div class="form-group col-md-6">
+          <input
+            type="text"
+            class="form-control"
+            id="country"
+            name="country"
+            placeholder="Country"
+            required
+          />
+          <span class="error-message" id="countryError"></span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <input
+            type="text"
+            class="form-control"
+            id="loginId"
+            name="loginId"
+            placeholder="Login ID"
+            required
+          />
+          <span class="error-message" id="loginIdError"></span>
+        </div>
+        <div class="form-group col-md-6">
+          <input
+            type="password"
+            class="form-control"
+            id="password"
+            name="password"
+            placeholder="Password"
+            required
+          />
+          <span class="error-message" id="passwordError"></span>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">Save</button>
+    </form>
+  </div>
+
+  <script>
+    $(document).ready(function () {
+      $("#userForm").on("submit", function (event) {
+        event.preventDefault();
+        $(".error-message").text("").hide(); // Clear previous error messages
+        const formData = {
+          firstName: $("#firstName").val(),
+          lastName: $("#lastName").val(),
+          mobileNo: $("#mobileNo").val(),
+          email: $("#email").val(),
+          address: {
+            street: $("#street").val(),
+            city: $("#city").val(),
+            state: $("#state").val(),
+            country: $("#country").val(),
+          },
+          loginId: $("#loginId").val(),
+          password: $("#password").val(),
+        };
+        $.ajax({
+          type: "POST",
+          url: "/api/users",
+          data: JSON.stringify(formData),
+          contentType: "application/json",
+          success: function (response) {
+            const user = {
+              email: response.email,
+              name: `${response.firstName} ${response.lastName}`,
+            };
+            localStorage.setItem("live_user", JSON.stringify(user));
+            window.location.href = "/display";
+          },
+          error: function (err) {
+            try {
+              const response = JSON.parse(err.responseText);
+              if (response.errors) {
+                for (const field in response.errors) {
+                  $(`#${field}Error`).text(response.errors[field]).show();
+                }
+              } else {
+                alert("An unknown error occurred.");
+              }
+            } catch (e) {
+              alert("An unknown error occurred.");
+            }
+          },
+        });
+      });
+    });
+  </script>
+</body>
+</html>
